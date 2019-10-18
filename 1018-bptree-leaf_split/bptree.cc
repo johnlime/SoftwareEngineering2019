@@ -3,6 +3,18 @@
 #include <sys/time.h>
 
 void
+print_temp(TEMP t)
+{
+	int i;
+
+	for (i = 0; i < t.nkey; i++) {
+		printf("[%p]", t.chi[i]);		
+		printf("%d", t.key[i]);
+	}
+	printf("[%p]\n", t.chi[i]);		
+}
+
+void
 print_tree_core(NODE *n)
 {
 	printf("["); 
@@ -154,6 +166,7 @@ insert(int key, DATA *data)
 
 		copy_from_left_to_temp(&temp, left);   // 0
 		insert_in_temp(&temp, key, data);      // 1
+    //print_temp(temp);
 		right->chi[N-1] = left->chi[N-1];	     // 2
 		left->chi[N-1] = right;                // 3
 		erase_entries(left);                   // 4
