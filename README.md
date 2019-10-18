@@ -4,3 +4,6 @@
 
 ## 10/11 B+tree(insert)
 >Fill in blanks (Step1&2).
+
+## 10/18 B+tree(leaf split)
+>Fill in blanks (Step3-6).
