@@ -1,0 +1,34 @@
+g++ -g -c -Wall -O2 bptree.cc
+bptree.cc:4:1: error: ‘vector’ does not name a type
+ vector<uint> Key_vector;
+ ^~~~~~
+bptree.cc: In function ‘void init_list()’:
+bptree.cc:11:3: error: ‘Key_vector’ was not declared in this scope
+   Key_vector.push_back(key);
+   ^~~~~~~~~~
+bptree.cc: In function ‘void search_single()’:
+bptree.cc:338:27: error: ‘Key_vector’ was not declared in this scope
+  for (int i = 0; i < (int)Key_vector.size(); i++) {
+                           ^~~~~~~~~~
+bptree.cc:339:28: error: ‘search_core’ was not declared in this scope
+   search_core(Key_vector[i]);
+                            ^
+bptree.cc: In function ‘void* work_core_search(void*)’:
+bptree.cc:352:15: error: ‘Key_vector’ was not declared in this scope
+   search_core(Key_vector[i]);
+               ^~~~~~~~~~
+bptree.cc:352:28: error: ‘search_core’ was not declared in this scope
+   search_core(Key_vector[i]);
+                            ^
+bptree.cc: In function ‘int main(int, char**)’:
+bptree.cc:389:10: error: ‘Key_vector’ was not declared in this scope
+   insert(Key_vector[i], NULL);
+          ^~~~~~~~~~
+bptree.cc:393:19: error: ‘cur_time’ was not declared in this scope
+  begin = cur_time();
+                   ^
+bptree.cc:396:30: error: ‘print_performance’ was not declared in this scope
+  print_performance(begin, end);
+                              ^
+Makefile:15: ターゲット 'bptree.o' のレシピで失敗しました
+make: *** [bptree.o] エラー 1
