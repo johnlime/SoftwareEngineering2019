@@ -58,6 +58,22 @@ alloc_internal(NODE *parent)
 }
 
 NODE *
+//rs_key right small
+alloc_root(NODE *left, int rs_key, NODE *right)
+{
+  NODE *node;
+  if (!(node = (NODE *)calloc(1, sizeof(NODE)))) ERR;
+  node->parent = NULL;
+  node->isLeaf = false; //this is a parent node
+  node->key[0] = rs_key;
+  node->chi[0] = left;
+  node->chi[1] = right;
+  node->nkey = 1;
+
+  return node;
+}
+
+NODE *
 find_leaf(NODE *node, int key)
 {
 	int kid;
@@ -154,36 +170,82 @@ erase_entries(NODE *node)
 }
 
 void
-copy_from_temp_to_left(TEMP temp, NODE *left)
+copy_from_temp_to_left(TEMP temp, NODE *left, int range)
 {
   // Step 5
-  for (int i = 0; i < N/2; i++) {
+  for (int i = 0; i < range; i++) {
     left->chi[i] = temp.chi[i];
     left->key[i] = temp.key[i];
   }
-  left->nkey = N/2;
+  left->nkey = range;
 }
 
 void
-copy_from_temp_to_right(TEMP temp, NODE *right)
+copy_from_temp_to_right(TEMP temp, NODE *right, int range)
 {
   // Step 6
-  for (int i = 0; i < N/2; i++) {
-    right->chi[i] = temp.chi[N/2 + i];
-    right->key[i] = temp.key[N/2 + i];
+  for (int i = 0; i < range; i++) {
+    right->chi[i] = temp.chi[range + i];
+    right->key[i] = temp.key[range + i];
   }
-  right->nkey = N/2;
+  right->nkey = range;
+}
+
+void
+insert_after_left_child(NODE *parent, NODE *left, int rs_key, NODE *right) {
+  int lid = 0;
+  int rid = 0;
+  int i;
+  // find left child pointer in parent
+  for (i = 0; i < parent->nkey + 1; i++) {
+    if (parent->chi[i] == left){
+      lid = i;
+      rid = lid + 1;
+      break;
+    }
+  } assert(i != parent->nkey + 1);
+  // shift keys and childs in parent
+  for (i = parent->nkey + 1; i > rid; i--) {
+    parent->chi[i] = parent->chi[i - 1];
+  }
+  for (i = parent->nkey; i > lid; i--) {
+    parent->key[i] = parent->key[i - 1];
+  }
+  // insert new keys and childs
+  parent->key[lid] = rs_key;
+  parent->chi[rid] = right;
+  parent->nkey++;
 }
 
 void
 insert_in_parent(NODE *left_child, int rs_key, NODE *right_child)
 {
   // Step 8
-  // You do not need to implement today.
-  // This is for the next week.
-
   printf("Left:  "); print_tree(left_child);
   printf("Right: "); print_tree(right_child);
+
+  if (Root == left_child) {
+    Root = alloc_root(left_child, rs_key, right_child);
+    left_child->parent = right_child->parent = Root;
+    return;
+  }
+  NODE *left_parent = left_child->parent;
+  if (left_parent->nkey < N - 1){
+    insert_after_left_child(left_parent, left_child, rs_key, right_child);
+  }
+  else {
+    printf("%s\n", "else");
+    TEMP temp;
+    copy_from_left_to_temp(&temp, left_parent);
+    insert_in_temp(&temp, rs_key, right_child);
+    erase_entries(left_parent);
+    NODE *right_parent = alloc_internal(left_parent->parent);
+    copy_from_temp_to_left(temp, left_parent, (N+1)/2);
+    int new_rs_key = temp.key[(N+1)/2 - 1];
+    copy_from_temp_to_right(temp, right_parent, (N+1)/2);
+    printf("%s\n", "going");
+    insert_in_parent(left_parent, new_rs_key, right_parent);
+  }
 }
 
 void
@@ -213,8 +275,8 @@ insert(int key, DATA *data)
 		right->chi[N-1] = left->chi[N-1];	     // 2
 		left->chi[N-1] = right;                // 3
 		erase_entries(left);                   // 4
-		copy_from_temp_to_left(temp, left);    // 5
-		copy_from_temp_to_right(temp, right);  // 6
+		copy_from_temp_to_left(temp, left, N/2);    // 5
+		copy_from_temp_to_right(temp, right, N/2);  // 6
 		int rs_key = right->key[0];            // 7
 		insert_in_parent(left, rs_key, right); // 8
 	}
