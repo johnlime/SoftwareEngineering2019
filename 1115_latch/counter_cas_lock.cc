@@ -15,16 +15,24 @@ static constexpr uint UnlockBit = 0x00;
 std::atomic<uint> Mutex;
 
 bool my_lock_core() {
-	return true;
+  auto lock = Mutex.load();
+  if (lock == LockBit){
+    usleep(1);
+    return false;
+  }
+  return Mutex.compare_exchange_strong(lock, LockBit);
 }
 
 void my_unlock() 
 { 
-
+  Mutex.store(UnlockBit);
 }
 
 void my_lock(void) {
-
+  bool okay = false;
+  while (okay == false){
+    okay = my_lock_core();
+  }
 }
 
 void *worker(void *arg) {
