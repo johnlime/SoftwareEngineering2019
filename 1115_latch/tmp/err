@@ -1,0 +1,12 @@
+counter_fad.cc: In function ‘int main()’:
+counter_fad.cc:38:63: error: use of deleted function ‘std::atomic<int>::atomic(const std::atomic<int>&)’
+   printf("Counter: %u (Ref. %u)\n", Counter, NbThread * NbLoop);
+                                                               ^
+In file included from counter_fad.cc:5:0:
+/usr/include/c++/4.8/atomic:601:7: error: declared here
+       atomic(const atomic&) = delete;
+       ^
+counter_fad.cc:38:63: error: cannot pass objects of non-trivially-copyable type ‘struct std::atomic<int>’ through ‘...’
+   printf("Counter: %u (Ref. %u)\n", Counter, NbThread * NbLoop);
+                                                               ^
+counter_fad.cc:38:63: warning: format ‘%u’ expects argument of type ‘unsigned int’, but argument 2 has type ‘std::atomic<int>’ [-Wformat=]

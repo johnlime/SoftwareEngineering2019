@@ -1,30 +1,21 @@
-T1 = counter_fetch_and_add
-T2 = counter_cas_lock
-T3 = counter_non_lock
-T4 = counter_pthread_lock
+T1 = silo
 
 CC = g++
-CFLAGS = -g -c -Wall -O0 -std=c++11
-LDFLAGS = -lm -pthread 
+CFLAGS = -c -Wall -g -O0 -std=c++0x -Wunused-variable -std=c++17
+LDFLAGS = -lpthread -lcurses -lreadline
 
-OBJ_T1 = counter_fetch_and_add.o
-OBJ_T2 = counter_cas_lock.o
-OBJ_T3 = counter_non_lock.o
-OBJ_T4 = counter_pthread_lock.o
+O1 = silo.cc lib.cc
 
-all: $(T1) $(T2) $(T3) $(T4) 
+#
+# Rules for make
+#
+all: $(T1) 
 
-$(T1): $(OBJ_T1)
-	$(CC) $(LDFLAGS) -o $@ $^
-$(T2): $(OBJ_T2)
-	$(CC) $(LDFLAGS) -o $@ $^
-$(T3): $(OBJ_T3)
-	$(CC) $(LDFLAGS) -o $@ $^
-$(T4): $(OBJ_T4)
-	$(CC) $(LDFLAGS) -o $@ $^
+$(T1): $(O1) 
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 .cc.o:
 	$(CC) $(CFLAGS) $<
 
 clean:
-	rm -f *~ *.o $(T1) $(T2) $(T3) $(T4) 
+	rm -f *~ *.o *.exe *.stackdump $(T1)
