@@ -22,3 +22,6 @@ Left:  [1 2]
 Right: [3 5]
 [1 2]
 ```
+
+## 10/22 B+tree(full implementation)
+Segmentation Error が出ていて一ヶ月直せていないのでこのまま出します。`1018_bptree-leaf_split`に入っています。

@@ -258,7 +258,7 @@ worker(void *arg)
       check.obj = __atomic_load_n(&(Row[(*itr).tuple.key].tidw.obj), __ATOMIC_ACQUIRE);
 
       // 1
-      if ((*itr).tidw.epoch != check.epoch /* ||*/ /* different tid? */ ) {
+      if ((*itr).tidw.epoch != check.epoch ||  ) {
         unlockWriteSet(lockList);
         lockList.clear();
         readSet.clear();

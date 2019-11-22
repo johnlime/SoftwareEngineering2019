@@ -121,11 +121,13 @@ void
 copy_from_left_to_temp(TEMP *temp, NODE *left)
 {
   // Step 1
+  bzero(temp, sizeof(TEMP));
   for (int i = 0; i < N - 1; i++) {
     temp->chi[i] = left->chi[i];
     temp->key[i] = left->key[i];
   }
   temp->nkey = N - 1;
+  temp->chi[N - 1] = left->chi[N - 1];
 }
 
 void
@@ -142,18 +144,47 @@ insert_in_temp(TEMP *temp, int key, void *ptr)
     temp->chi[0] = (NODE *)ptr;
   }
   else {
-  // Find the place to insert
-    for (i = 0; i < temp->nkey; i++) {
-      if (key < temp->key[i]) break;
-    }
+    // Find the place to insert
+      for (i = 0; i < temp->nkey; i++) {
+        if (key < temp->key[i]) break;
+      }
 
-  // Shift and insert
-  for (int j = temp->nkey; j > i; j--) {
-    temp->chi[j] = temp->chi[j-1] ;
-    temp->key[j] = temp->key[j-1] ;
+    // Shift and insert
+    for (int j = temp->nkey; j > i; j--) {
+      temp->chi[j] = temp->chi[j-1] ;
+      temp->key[j] = temp->key[j-1] ;
+    }
+    temp->key[i] = key;
+    temp->chi[i] = (NODE *)ptr;
   }
-  temp->key[i] = key;
-  temp->chi[i] = (NODE *)ptr;
+  temp->nkey++;
+}
+
+void
+insert_in_temp_after_left(TEMP *temp, NODE *left, int key, void *ptr)
+{
+  int i;
+  if (key < temp->key[0]) {
+    for (i = temp->nkey; i > 0; i--) {
+      temp->chi[i] = temp->chi[i-1] ;
+      temp->key[i] = temp->key[i-1] ;
+    }
+    temp->key[0] = key;
+    temp->chi[0] = (NODE *)ptr;
+  }
+  else {
+    // Find the place to insert
+      for (i = 0; i < temp->nkey; i++) {
+        if (temp->chi[i] == left) break;
+      }
+
+    // Shift and insert
+    for (int j = temp->nkey; j > i; j--) {
+      temp->chi[j] = temp->chi[j-1] ;
+      temp->key[j] = temp->key[j-1] ;
+    }
+    temp->key[i] = key;
+    temp->chi[i] = (NODE *)ptr;
   }
   temp->nkey++;
 }
@@ -162,11 +193,17 @@ void
 erase_entries(NODE *node)
 {
   // Step 4
-  for (int i = 0; i < N - 1; i++) {
-    node->chi[i] = NULL;
+  printf("%d\n", 0);
+  for (int i = 0; i < node->nkey; i++) {
     node->key[i] = -1;
   }
-  node->nkey -= N - 1;
+  printf("%d\n", 1);
+  for (int i = 0; i < node->nkey + 1; i++) {
+    node->chi[i] = NULL;
+  }
+  printf("%d\n", 2);
+	node->nkey = 0;
+  printf("%d\n", 3);
 }
 
 void
@@ -234,17 +271,16 @@ insert_in_parent(NODE *left_child, int rs_key, NODE *right_child)
     insert_after_left_child(left_parent, left_child, rs_key, right_child);
   }
   else {
-    printf("%s\n", "else");
     TEMP temp;
     copy_from_left_to_temp(&temp, left_parent);
-    insert_in_temp(&temp, rs_key, right_child);
+    insert_in_temp_after_left(&temp, left_child, rs_key, right_child);
+    print_tree(left_parent);
     erase_entries(left_parent);
-    NODE *right_parent = alloc_internal(left_parent->parent);
-    copy_from_temp_to_left(temp, left_parent, (N+1)/2);
-    int new_rs_key = temp.key[(N+1)/2 - 1];
-    copy_from_temp_to_right(temp, right_parent, (N+1)/2);
-    printf("%s\n", "going");
-    insert_in_parent(left_parent, new_rs_key, right_parent);
+    // NODE *right_parent = alloc_internal(left_parent->parent);
+    // copy_from_temp_to_left(temp, left_parent, (N+1)/2);
+    // int new_rs_key = temp.key[(N+1)/2 - 1];
+    // copy_from_temp_to_right(temp, right_parent, (N+1)/2);
+    // insert_in_parent(left_parent, new_rs_key, right_parent);
   }
 }
 
@@ -271,7 +307,6 @@ insert(int key, DATA *data)
 
 		copy_from_left_to_temp(&temp, left);   // 0
 		insert_in_temp(&temp, key, data);      // 1
-    print_temp(temp);
 		right->chi[N-1] = left->chi[N-1];	     // 2
 		left->chi[N-1] = right;                // 3
 		erase_entries(left);                   // 4
