@@ -1,7 +1,7 @@
 T1 = bptree
 
 CC = g++
-CFLAGS = -g -c -Wall -O2
+CFLAGS = -g -c -Wall -O0
 LDFLAGS = -lm -pthread 
 
 OBJ_T1 = bptree.o

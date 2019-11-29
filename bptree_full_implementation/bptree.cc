@@ -14,16 +14,27 @@ print_temp(TEMP t)
 }
 
 void
+print_node(NODE *n)
+{
+	int i;
+	for (i = 0; i < n->nkey; i++) {
+		printf("[%p]", n->chi[i]);
+		printf("%d", n->key[i]);
+	}
+	printf("[%p]\n", n->chi[i]);
+}
+
+void
 print_tree_core(NODE *n)
 {
-	printf("[");
+	printf("[");fflush(stdout);
 	for (int i = 0; i < n->nkey; i++) {
 		if (!n->isLeaf) print_tree_core(n->chi[i]);
-		printf("%d", n->key[i]);
+		printf("%d", n->key[i]);fflush(stdout);
 		if (i != n->nkey-1 && n->isLeaf) putchar(' ');
 	}
 	if (!n->isLeaf) print_tree_core(n->chi[n->nkey]);
-	printf("]");
+	printf("]");fflush(stdout);
 }
 
 void
@@ -121,16 +132,17 @@ void
 copy_from_left_to_temp(TEMP *temp, NODE *left)
 {
   // Step 1
+  int i;
   bzero(temp, sizeof(TEMP));
-  for (int i = 0; i < N - 1; i++) {
+  for (i = 0; i < N - 1; i++) {
     temp->chi[i] = left->chi[i];
     temp->key[i] = left->key[i];
   }
   temp->nkey = N - 1;
-  temp->chi[N - 1] = left->chi[N - 1];
+  temp->chi[i] = left->chi[i];
 }
 
-void
+void //if temp contains leaves len(key) == len(chi)
 insert_in_temp(TEMP *temp, int key, void *ptr)
 {
   // Step 2
@@ -160,32 +172,23 @@ insert_in_temp(TEMP *temp, int key, void *ptr)
   temp->nkey++;
 }
 
-void
+void //if temp contains parent, len(key) + 1 == len(chi)
 insert_in_temp_after_left(TEMP *temp, NODE *left, int key, void *ptr)
 {
-  int i;
-  if (key < temp->key[0]) {
-    for (i = temp->nkey; i > 0; i--) {
-      temp->chi[i] = temp->chi[i-1] ;
-      temp->key[i] = temp->key[i-1] ;
-    }
-    temp->key[0] = key;
-    temp->chi[0] = (NODE *)ptr;
+  int i; // Find the place to insert
+  for (i = 0; i <= temp->nkey; i++) {
+    if (temp->chi[i] == left) break;
   }
-  else {
-    // Find the place to insert
-      for (i = 0; i < temp->nkey; i++) {
-        if (temp->chi[i] == left) break;
-      }
 
-    // Shift and insert
-    for (int j = temp->nkey; j > i; j--) {
-      temp->chi[j] = temp->chi[j-1] ;
-      temp->key[j] = temp->key[j-1] ;
-    }
-    temp->key[i] = key;
-    temp->chi[i] = (NODE *)ptr;
+  int j; // Shift and insert
+  temp->chi[temp->nkey + 1] = temp->chi[temp->nkey];
+  for (j = temp->nkey; j > i; j--) {
+    temp->chi[j] = temp->chi[j-1] ;
+    temp->key[j] = temp->key[j-1] ;
   }
+  temp->key[j] = temp->key[j-1];
+  temp->key[i] = key;
+  temp->chi[i+1] = (NODE *)ptr;
   temp->nkey++;
 }
 
@@ -193,39 +196,65 @@ void
 erase_entries(NODE *node)
 {
   // Step 4
-  printf("%d\n", 0);
   for (int i = 0; i < node->nkey; i++) {
     node->key[i] = -1;
   }
-  printf("%d\n", 1);
   for (int i = 0; i < node->nkey + 1; i++) {
     node->chi[i] = NULL;
   }
-  printf("%d\n", 2);
 	node->nkey = 0;
-  printf("%d\n", 3);
 }
 
 void
-copy_from_temp_to_left(TEMP temp, NODE *left, int range)
+copy_from_temp_to_left(TEMP temp, NODE *left)
 {
   // Step 5
-  for (int i = 0; i < range; i++) {
+  for (int i = 0; i < (int)ceil(N/2); i++) {
     left->chi[i] = temp.chi[i];
     left->key[i] = temp.key[i];
   }
-  left->nkey = range;
+  left->nkey = (int)ceil(N/2);
 }
 
 void
-copy_from_temp_to_right(TEMP temp, NODE *right, int range)
+copy_from_temp_to_right(TEMP temp, NODE *right)
 {
   // Step 6
-  for (int i = 0; i < range; i++) {
-    right->chi[i] = temp.chi[range + i];
-    right->key[i] = temp.key[range + i];
+  for (int i = 0; i < (int)ceil(N/2); i++) {
+    right->chi[i] = temp.chi[(int)ceil(N/2) + i];
+    right->key[i] = temp.key[(int)ceil(N/2) + i];
   }
-  right->nkey = range;
+  right->nkey = (int)ceil(N/2);
+}
+
+void
+copy_from_temp_to_left_parent(TEMP *temp, NODE *left)
+{
+  // Step 5
+  int i;
+  for (i = 0; i < (int)ceil((N+1)/2); i++) {
+    left->chi[i] = temp->chi[i];
+    left->key[i] = temp->key[i];
+    left->nkey++;
+    left->chi[i]->parent = left;
+  }
+  left->chi[i] = temp->chi[i];
+  left->chi[i]->parent = left;
+}
+
+void
+copy_from_temp_to_right_parent(TEMP *temp, NODE *right)
+{
+  // Step 6
+  int i;
+  for (i = 0; i < (int)ceil((N+1)/2) - 1; i++) {
+    right->chi[i] = temp->chi[(int)ceil((N+1)/2) + i + 1];
+    right->key[i] = temp->key[(int)ceil((N+1)/2) + i + 1];
+    right->nkey++;
+    right->chi[i]->parent = right;
+  }
+  right->chi[i] = temp->chi[(int)ceil((N+1)/2) + i + 1];
+  right->chi[i]->parent = right;
 }
 
 void
@@ -258,8 +287,9 @@ void
 insert_in_parent(NODE *left_child, int rs_key, NODE *right_child)
 {
   // Step 8
-  printf("Left:  "); print_tree(left_child);
-  printf("Right: "); print_tree(right_child);
+  // printf("RS_Key: "); printf("%d\n", rs_key);
+  // printf("Left Child:  "); print_node(left_child);
+  // printf("Right Child: "); print_node(right_child);
 
   if (Root == left_child) {
     Root = alloc_root(left_child, rs_key, right_child);
@@ -274,13 +304,17 @@ insert_in_parent(NODE *left_child, int rs_key, NODE *right_child)
     TEMP temp;
     copy_from_left_to_temp(&temp, left_parent);
     insert_in_temp_after_left(&temp, left_child, rs_key, right_child);
-    print_tree(left_parent);
     erase_entries(left_parent);
-    // NODE *right_parent = alloc_internal(left_parent->parent);
-    // copy_from_temp_to_left(temp, left_parent, (N+1)/2);
-    // int new_rs_key = temp.key[(N+1)/2 - 1];
-    // copy_from_temp_to_right(temp, right_parent, (N+1)/2);
-    // insert_in_parent(left_parent, new_rs_key, right_parent);
+    NODE *right_parent = alloc_internal(left_parent->parent);
+    copy_from_temp_to_left_parent(&temp, left_parent);
+    int new_rs_key = temp.key[(int)ceil((N+1)/2)];
+    copy_from_temp_to_right_parent(&temp, right_parent);
+
+    // printf("Temp: "); print_temp(temp);
+    // printf("Left Parent: "); print_node(left_parent);
+    // printf("Right Parent: "); print_node(right_parent);
+
+    insert_in_parent(left_parent, new_rs_key, right_parent);
   }
 }
 
@@ -310,8 +344,8 @@ insert(int key, DATA *data)
 		right->chi[N-1] = left->chi[N-1];	     // 2
 		left->chi[N-1] = right;                // 3
 		erase_entries(left);                   // 4
-		copy_from_temp_to_left(temp, left, N/2);    // 5
-		copy_from_temp_to_right(temp, right, N/2);  // 6
+		copy_from_temp_to_left(temp, left);    // 5
+		copy_from_temp_to_right(temp, right);  // 6
 		int rs_key = right->key[0];            // 7
 		insert_in_parent(left, rs_key, right); // 8
 	}
@@ -352,8 +386,9 @@ main(int argc, char *argv[])
 {
 	init_root();
 
-  while (true) {
-		insert(interactive(), NULL);
+  for (int i=0; i<100*100; i++) {
+		// insert(interactive(), NULL);
+    insert(i, NULL);
     print_tree(Root);
   }
 
